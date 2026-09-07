@@ -12,6 +12,8 @@ module ActiveRecord
 
     IS_RAILS_7_1_PLUS = ::Gem::Version.new(::ActiveRecord.version) >= ::Gem::Version.new("7.1.0")
 
+    IS_RAILS_8_PLUS = ::Gem::Version.new(::ActiveRecord.version) >= ::Gem::Version.new("8.0.0")
+
     def pluck_each(*args)
       pluck_in_batches(*args) do |values|
         values.each { |value| yield value }
@@ -31,7 +33,9 @@ module ActiveRecord
       relation = self
       batch_size = options[:batch_size] || 1000
 
-      if IS_RAILS_7_1_PLUS
+      if IS_RAILS_8_PLUS
+        relation = relation.reorder(build_batch_orders(Array(primary_key), :asc).to_h)
+      elsif IS_RAILS_7_1_PLUS
         relation = relation.reorder(build_batch_orders(:asc).to_h)
       elsif IS_RAILS_6_1_PLUS
         relation = relation.reorder(batch_order(:asc)).limit(batch_size)
